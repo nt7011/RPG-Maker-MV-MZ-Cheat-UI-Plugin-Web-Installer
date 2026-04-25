@@ -1,13 +1,8 @@
 import { createTranslator } from "./i18n.mjs";
 
-export const LOADER_PLUGIN_NAME = "live-translator-loader";
+export const LOADER_PLUGIN_NAME = "CheatBridge";
 export const VERSION_FILE_NAME = "version.json";
-export const CONFIG_FILE_MAP = Object.freeze({
-  settings: "settings.json",
-  translator: "translator.json",
-});
 
-const CONFIG_FILE_NAMES = new Set(Object.values(CONFIG_FILE_MAP));
 const DEFAULT_T = createTranslator("en");
 
 export function patchEmptyPackageName(text) {
@@ -71,20 +66,15 @@ export async function loadVersionInfo(url = new URL("./version.json", import.met
   }
 }
 
-export async function loadInstalledConfigs(rootHandle, manifest, options = {}) {
+export async function loadInstalledPlugin(rootHandle, manifest, options = {}) {
   const t = getTranslator(options);
   if (!rootHandle) {
     return {
-      available: false,
-      editable: false,
       installed: false,
       installedVersionChecked: false,
       installedVersion: null,
-      missingFields: [],
-      requiresReinstall: false,
-      configs: null,
       supportDirectoryPath: null,
-      reason: t("core.selectFolderToLoadConfigs"),
+      reason: t("core.selectFolderToInspectInstall"),
       warnings: [],
     };
   }
@@ -92,14 +82,9 @@ export async function loadInstalledConfigs(rootHandle, manifest, options = {}) {
   const inspection = await inspectGameDirectory(rootHandle, { t });
   if (!inspection.valid) {
     return {
-      available: false,
-      editable: false,
       installed: false,
       installedVersionChecked: false,
       installedVersion: null,
-      missingFields: [],
-      requiresReinstall: false,
-      configs: null,
       supportDirectoryPath: null,
       reason: inspection.reason,
       warnings: [],
@@ -113,16 +98,11 @@ export async function loadInstalledConfigs(rootHandle, manifest, options = {}) {
   );
   if (!supportDirHandle) {
     return {
-      available: false,
-      editable: false,
       installed: false,
       installedVersionChecked: false,
       installedVersion: null,
-      missingFields: [],
-      requiresReinstall: false,
-      configs: null,
       supportDirectoryPath,
-      reason: t("core.noInstalledConfig", { path: supportDirectoryPath }),
+      reason: t("core.noInstalledPlugin", { path: supportDirectoryPath }),
       warnings: [],
     };
   }
@@ -132,82 +112,14 @@ export async function loadInstalledConfigs(rootHandle, manifest, options = {}) {
     `${supportDirectoryPath}/${VERSION_FILE_NAME}`,
     t,
   );
-  const baseSnapshot = {
-    installedVersionChecked: true,
-    installedVersion: versionInfo.version,
-  };
-  const warnings = [...versionInfo.warnings];
-
-  const configs = {};
-  for (const [key, fileName] of Object.entries(CONFIG_FILE_MAP)) {
-    const fileHandle = await tryGetFileHandle(supportDirHandle, fileName);
-    if (!fileHandle) {
-      return {
-        available: false,
-        editable: false,
-        installed: true,
-        ...baseSnapshot,
-        missingFields: [],
-        requiresReinstall: false,
-        configs: null,
-        supportDirectoryPath,
-        reason: t("core.installedConfigIncomplete", { path: `${supportDirectoryPath}/${fileName}` }),
-        warnings,
-      };
-    }
-
-    try {
-      const data = await readTextFile(fileHandle);
-      configs[key] = JSON.parse(data.text);
-    } catch (error) {
-      return {
-        available: false,
-        editable: false,
-        installed: true,
-        ...baseSnapshot,
-        missingFields: [],
-        requiresReinstall: false,
-        configs: null,
-        supportDirectoryPath,
-        reason: t("core.couldNotParseConfig", {
-          path: `${supportDirectoryPath}/${fileName}`,
-          message: error.message,
-        }),
-        warnings,
-      };
-    }
-  }
-
-  const defaultConfigs = await loadBundledDefaultConfigs(manifest, options);
-  const missingFields = getMissingConfigFields(defaultConfigs, configs);
-  if (missingFields.length > 0) {
-    return {
-      available: true,
-      editable: false,
-      installed: true,
-      ...baseSnapshot,
-      missingFields,
-      requiresReinstall: true,
-      configs,
-      supportDirectoryPath,
-      reason: t("core.installedConfigMissingFields", {
-        fields: missingFields.join(", "),
-      }),
-      warnings,
-    };
-  }
 
   return {
-    available: true,
-    editable: true,
     installed: true,
-    ...baseSnapshot,
-    missingFields: [],
-    requiresReinstall: false,
-    configs,
+    installedVersionChecked: true,
+    installedVersion: versionInfo.version,
     supportDirectoryPath,
-    reason: t("core.editingInstalledConfigs", { path: supportDirectoryPath }),
-    warnings,
+    reason: t("core.installedPluginFound", { path: supportDirectoryPath }),
+    warnings: versionInfo.warnings,
   };
 }
 
@@ -344,7 +256,6 @@ export async function inspectGameDirectory(rootHandle, options = {}) {
 export async function installGame(rootHandle, manifest, options = {}) {
   const baseUrl = options.baseUrl ?? import.meta.url;
   const log = options.log ?? (() => {});
-  const overwriteExistingConfigs = options.overwriteExistingConfigs ?? false;
   const t = getTranslator(options);
   const inspection = await inspectGameDirectory(rootHandle, { t });
   if (!inspection.valid) {
@@ -434,27 +345,10 @@ export async function installGame(rootHandle, manifest, options = {}) {
 
   let supportFilesCopied = 0;
   for (const file of bundle.supportFiles) {
-    const existingSupportFileHandle = await tryGetFileHandleAtPath(supportDirHandle, file.name);
-    const rootConfigFile = isRootConfigFile(file.name);
-    const replacingExistingConfig = Boolean(
-      existingSupportFileHandle
-        && rootConfigFile
-        && overwriteExistingConfigs,
-    );
-
-    if (rootConfigFile && existingSupportFileHandle && !replacingExistingConfig) {
-      log(t("core.keptExistingSupportFile", {
-        fileName: file.name,
-        path: `${inspection.pluginsDirPath}/${manifest.supportDirectory}`,
-      }), "info");
-      continue;
-    }
-
-    const supportFileHandle = existingSupportFileHandle
-      ?? (await getFileHandleAtPath(supportDirHandle, file.name, { create: true }));
+    const supportFileHandle = await getFileHandleAtPath(supportDirHandle, file.name, { create: true });
     await writeBytes(supportFileHandle, file.bytes);
     supportFilesCopied += 1;
-    log(t(replacingExistingConfig ? "core.replacedSupportFile" : "core.copiedSupportFile", {
+    log(t("core.copiedSupportFile", {
       fileName: file.name,
       path: `${inspection.pluginsDirPath}/${manifest.supportDirectory}`,
     }), "success");
@@ -505,40 +399,6 @@ export async function installGame(rootHandle, manifest, options = {}) {
   };
 }
 
-export async function saveInstalledConfigs(rootHandle, manifest, configs, options = {}) {
-  const t = getTranslator(options);
-  const inspection = await inspectGameDirectory(rootHandle, { t });
-  if (!inspection.valid) {
-    throw new Error(inspection.reason);
-  }
-
-  const supportDirectoryPath = `${inspection.pluginsDirPath}/${manifest.supportDirectory}`;
-  const supportDirHandle = await tryGetDirectoryHandle(
-    inspection.pluginsDirHandle,
-    manifest.supportDirectory,
-  );
-  if (!supportDirHandle) {
-    throw new Error(t("core.noInstalledConfig", { path: supportDirectoryPath }));
-  }
-
-  for (const [key, fileName] of Object.entries(CONFIG_FILE_MAP)) {
-    const fileHandle = await tryGetFileHandle(supportDirHandle, fileName);
-    if (!fileHandle) {
-      throw new Error(t("core.installedConfigIncomplete", {
-        path: `${supportDirectoryPath}/${fileName}`,
-      }));
-    }
-
-    const existingData = await readTextFile(fileHandle);
-    await writeTextFile(fileHandle, serializeConfigFile(configs[key]), existingData.hasBom);
-  }
-
-  return {
-    savedFiles: [...CONFIG_FILE_NAMES],
-    supportDirectory: supportDirectoryPath,
-  };
-}
-
 async function fetchInstallerBundle(manifest, baseUrl, t) {
   const bundleDirectory = manifest.bundleDirectory.replace(/\/+$/, "");
   const loader = {
@@ -561,27 +421,6 @@ async function fetchInstallerBundle(manifest, baseUrl, t) {
   );
 
   return { loader, supportFiles, version };
-}
-
-async function loadBundledDefaultConfigs(manifest, options = {}) {
-  const baseUrl = options.baseUrl ?? import.meta.url;
-  const t = getTranslator(options);
-  const bundleDirectory = manifest.bundleDirectory.replace(/\/+$/, "");
-  const defaults = {};
-
-  for (const [configKey, fileName] of Object.entries(CONFIG_FILE_MAP)) {
-    const response = await fetch(new URL(`${bundleDirectory}/${fileName}`, baseUrl));
-    if (!response.ok) {
-      throw new Error(t("core.fetchAssetFailed", {
-        path: `/${bundleDirectory}/${fileName}`,
-        status: response.status,
-      }));
-    }
-
-    defaults[configKey] = JSON.parse(await response.text());
-  }
-
-  return defaults;
 }
 
 async function loadInstalledVersionInfo(supportDirHandle, versionPath, t) {
@@ -665,82 +504,12 @@ function encodeTextBytes(text) {
   return encoder.encode(text);
 }
 
-function serializeConfigFile(config) {
-  return `${JSON.stringify(config, null, 4)}\n`;
-}
-
 function normalizeVersion(version) {
   return typeof version === "string" ? version.trim() || null : null;
 }
 
-export function getMissingConfigFields(defaultConfigs, installedConfigs) {
-  const missingFields = [];
-
-  for (const [configKey, fileName] of Object.entries(CONFIG_FILE_MAP)) {
-    if (!Object.prototype.hasOwnProperty.call(defaultConfigs ?? {}, configKey)) {
-      continue;
-    }
-
-    const configMissingPaths = collectMissingConfigPaths(
-      defaultConfigs[configKey],
-      installedConfigs?.[configKey],
-      [],
-    );
-
-    for (const missingPath of configMissingPaths) {
-      missingFields.push(`${fileName}:${formatConfigPath(missingPath)}`);
-    }
-  }
-
-  return missingFields;
-}
-
 function getTranslator(options = {}) {
   return typeof options.t === "function" ? options.t : DEFAULT_T;
-}
-
-function collectMissingConfigPaths(template, actual, path) {
-  if (!isPlainObject(template)) {
-    return typeof actual === "undefined" ? [path] : [];
-  }
-
-  const actualObject = isPlainObject(actual) ? actual : {};
-  const missingPaths = [];
-
-  for (const [key, value] of Object.entries(template)) {
-    if (!Object.prototype.hasOwnProperty.call(actualObject, key)) {
-      missingPaths.push(...expandLeafPaths(value, [...path, key]));
-      continue;
-    }
-
-    missingPaths.push(...collectMissingConfigPaths(value, actualObject[key], [...path, key]));
-  }
-
-  return missingPaths;
-}
-
-function expandLeafPaths(template, path) {
-  if (!isPlainObject(template)) {
-    return [path];
-  }
-
-  return Object.entries(template).flatMap(([key, value]) => (
-    expandLeafPaths(value, [...path, key])
-  ));
-}
-
-function formatConfigPath(path) {
-  return path.reduce((label, segment) => (
-    typeof segment === "number"
-      ? `${label}[${segment}]`
-      : label
-        ? `${label}.${segment}`
-        : segment
-  ), "");
-}
-
-function isPlainObject(value) {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 async function tryGetDirectoryHandle(parentHandle, name) {
@@ -765,20 +534,6 @@ async function tryGetFileHandle(parentHandle, name) {
   }
 }
 
-async function tryGetFileHandleAtPath(parentHandle, filePath) {
-  const segments = getSupportPathSegments(filePath);
-  let directoryHandle = parentHandle;
-
-  for (const directoryName of segments.slice(0, -1)) {
-    directoryHandle = await tryGetDirectoryHandle(directoryHandle, directoryName);
-    if (!directoryHandle) {
-      return null;
-    }
-  }
-
-  return tryGetFileHandle(directoryHandle, segments[segments.length - 1]);
-}
-
 async function getFileHandleAtPath(parentHandle, filePath, options = {}) {
   const segments = getSupportPathSegments(filePath);
   let directoryHandle = parentHandle;
@@ -791,10 +546,6 @@ async function getFileHandleAtPath(parentHandle, filePath, options = {}) {
   }
 
   return directoryHandle.getFileHandle(segments[segments.length - 1], options);
-}
-
-function isRootConfigFile(filePath) {
-  return !/[\\/]/.test(filePath) && CONFIG_FILE_NAMES.has(filePath);
 }
 
 function getSupportPathSegments(filePath) {

@@ -37,9 +37,12 @@ Click "OK" button to see the solution.
 }
 
 function applyCheat () {
+    const currentScript = document.currentScript
     const cheatEngineBaseUrl = window.CheatEngine && window.CheatEngine.baseUrl
         ? window.CheatEngine.baseUrl
-        : '../cheat-engine/'
+        : currentScript && currentScript.src
+            ? currentScript.src.replace(/\/init\/import\.js(?:[?#].*)?$/, '/')
+            : 'cheat-engine/'
 
     function __resolveCheatPath(src) {
         return new URL(src, cheatEngineBaseUrl).href

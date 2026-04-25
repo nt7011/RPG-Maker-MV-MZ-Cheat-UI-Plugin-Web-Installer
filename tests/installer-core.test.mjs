@@ -5,11 +5,10 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
-  getMissingConfigFields,
   injectPluginEntry,
   installGame,
   isVersionOutdated,
-  loadInstalledConfigs,
+  loadInstalledPlugin,
   loadVersionInfo,
   patchEmptyPackageName,
 } from "../installer-core.mjs";
@@ -27,8 +26,8 @@ test("patchEmptyPackageName only updates empty name fields", () => {
   assert.equal(untouched.text, '{"name":"Already Set"}');
 });
 
-test("injectPluginEntry inserts the loader entry once", () => {
-  const entry = '{"name":"live-translator-loader","status":true,"description":"Entry point","parameters":{}},';
+test("injectPluginEntry inserts the CheatBridge entry once", () => {
+  const entry = '{"name":"CheatBridge","status":true,"description":"Entry point","parameters":{}},';
   const injected = injectPluginEntry('[{"name":"AnotherPlugin"}]', entry);
   assert.equal(injected.changed, true);
   assert.equal(
@@ -39,47 +38,6 @@ test("injectPluginEntry inserts the loader entry once", () => {
   const alreadyPresent = injectPluginEntry(`[${entry}]`, entry);
   assert.equal(alreadyPresent.changed, false);
   assert.equal(alreadyPresent.alreadyPresent, true);
-});
-
-test("getMissingConfigFields reports missing leaf paths from bundled defaults", () => {
-  const missingFields = getMissingConfigFields(
-    {
-      settings: {
-        translation: {
-          disableCjkFilter: false,
-          maxOutputTokens: 512,
-        },
-        gameMessage: {
-          textScale: 100,
-        },
-      },
-      translator: {
-        provider: "local",
-        settings: {
-          deepl: {
-            apiKey: "________NONE________",
-          },
-        },
-      },
-    },
-    {
-      settings: {
-        translation: {
-          disableCjkFilter: false,
-        },
-      },
-      translator: {
-        provider: "local",
-        settings: {},
-      },
-    },
-  );
-
-  assert.deepEqual(missingFields, [
-    "settings.json:translation.maxOutputTokens",
-    "settings.json:gameMessage.textScale",
-    "translator.json:settings.deepl.apiKey",
-  ]);
 });
 
 test("loadVersionInfo returns the bundled version when version.json is present", async () => {
@@ -111,69 +69,16 @@ test("loadVersionInfo returns null when version.json is missing", async () => {
   }
 });
 
-test("isVersionOutdated compares installed version against newest version", () => {
+test("isVersionOutdated compares installed version against installable version", () => {
   assert.equal(isVersionOutdated("2.3", "2.4"), true);
   assert.equal(isVersionOutdated("2.10", "2.9"), true);
   assert.equal(isVersionOutdated("2.3.0", "2.3"), true);
   assert.equal(isVersionOutdated(null, "2.4"), true);
-  assert.equal(isVersionOutdated("awergerf", "local_debug"), true);
   assert.equal(isVersionOutdated("local_debug", "local_debug"), false);
   assert.equal(isVersionOutdated("2.3", null), false);
 });
 
-test("installGame overwrites existing config files during reinstall", async () => {
-  const rootHandle = createFakeDirectory("Game");
-  const jsHandle = rootHandle.addDirectory("js");
-  const pluginsHandle = jsHandle.addDirectory("plugins");
-  const supportHandle = pluginsHandle.addDirectory("live-translator");
-
-  rootHandle.setFileText("package.json", '{"name":"Game"}\n');
-  jsHandle.setFileText("plugins.js", "[]\n");
-  supportHandle.setFileText("settings.json", '{ "gameMessage": {} }\n');
-  supportHandle.setFileText("translator.json", '{ "provider": "deepl" }\n');
-
-  const manifest = {
-    bundleDirectory: "live-translator-installer",
-    loaderFile: "live-translator-loader.js",
-    supportDirectory: "live-translator",
-    supportFiles: ["settings.json", "translator.json"],
-    pluginEntry: '{"name":"live-translator-loader","status":true,"description":"Entry point","parameters":{}},',
-  };
-
-  const defaultSettings = '{\n    "translation": {\n        "maxOutputTokens": 512\n    },\n    "gameMessage": {\n        "textScale": 100\n    }\n}\n';
-  const defaultTranslator = '{\n    "provider": "local"\n}\n';
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url) => createFetchResponse({
-    "/version.json": JSON.stringify({ version: "2.4" }),
-    "/live-translator-installer/live-translator-loader.js": 'console.log("loader");\n',
-    "/live-translator-installer/settings.json": defaultSettings,
-    "/live-translator-installer/translator.json": defaultTranslator,
-  }, url);
-
-  try {
-    await installGame(rootHandle, manifest, {
-      baseUrl: "https://example.test/app.mjs",
-      overwriteExistingConfigs: true,
-    });
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-
-  assert.equal(
-    supportHandle.readFileText("settings.json"),
-    defaultSettings,
-  );
-  assert.equal(
-    supportHandle.readFileText("translator.json"),
-    defaultTranslator,
-  );
-  assert.equal(
-    supportHandle.readFileText("version.json"),
-    JSON.stringify({ version: "2.4" }),
-  );
-});
-
-test("installGame copies nested support files", async () => {
+test("installGame copies CheatBridge and cheat-engine support files", async () => {
   const rootHandle = createFakeDirectory("Game");
   const jsHandle = rootHandle.addDirectory("js");
   const pluginsHandle = jsHandle.addDirectory("plugins");
@@ -182,34 +87,24 @@ test("installGame copies nested support files", async () => {
   jsHandle.setFileText("plugins.js", "[]\n");
 
   const manifest = {
-    bundleDirectory: "live-translator-installer",
-    loaderFile: "live-translator-loader.js",
-    supportDirectory: "live-translator",
+    bundleDirectory: "cheat-engine",
+    loaderFile: "CheatBridge.js",
+    supportDirectory: "cheat-engine",
     supportFiles: [
-      "settings.json",
-      "translator.json",
-      "precacher/precacher.js",
-      "precacher/pretranslator.js",
-      "precacher-ui/app.js",
-      "precacher-ui/index.html",
-      "precacher-ui/style.css",
-      "precacher-ui-launcher.js",
+      "init/import.js",
+      "init/setup.js",
+      "MainComponent.js",
     ],
-    pluginEntry: '{"name":"live-translator-loader","status":true,"description":"Entry point","parameters":{}},',
+    pluginEntry: '{"name":"CheatBridge","status":true,"description":"Entry point","parameters":{}},',
   };
 
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url) => createFetchResponse({
     "/version.json": JSON.stringify({ version: "2.4" }),
-    "/live-translator-installer/live-translator-loader.js": 'console.log("loader");\n',
-    "/live-translator-installer/settings.json": "{}\n",
-    "/live-translator-installer/translator.json": "{}\n",
-    "/live-translator-installer/precacher/precacher.js": 'console.log("precacher");\n',
-    "/live-translator-installer/precacher/pretranslator.js": 'console.log("pretranslator");\n',
-    "/live-translator-installer/precacher-ui/app.js": 'console.log("ui app");\n',
-    "/live-translator-installer/precacher-ui/index.html": "<!doctype html>\n",
-    "/live-translator-installer/precacher-ui/style.css": "body {}\n",
-    "/live-translator-installer/precacher-ui-launcher.js": 'console.log("launcher");\n',
+    "/cheat-engine/CheatBridge.js": 'console.log("bridge");\n',
+    "/cheat-engine/init/import.js": 'console.log("import");\n',
+    "/cheat-engine/init/setup.js": 'console.log("setup");\n',
+    "/cheat-engine/MainComponent.js": 'console.log("main");\n',
   }, url);
 
   let result;
@@ -221,70 +116,38 @@ test("installGame copies nested support files", async () => {
     globalThis.fetch = originalFetch;
   }
 
-  const supportHandle = pluginsHandle.getDirectory("live-translator");
-  assert.equal(
-    supportHandle.readFileTextAtPath("precacher/precacher.js"),
-    'console.log("precacher");\n',
-  );
-  assert.equal(
-    supportHandle.readFileTextAtPath("precacher/pretranslator.js"),
-    'console.log("pretranslator");\n',
-  );
-  assert.equal(
-    supportHandle.readFileTextAtPath("precacher-ui/app.js"),
-    'console.log("ui app");\n',
-  );
-  assert.equal(
-    supportHandle.readFileTextAtPath("precacher-ui/index.html"),
-    "<!doctype html>\n",
-  );
-  assert.equal(
-    supportHandle.readFileTextAtPath("precacher-ui/style.css"),
-    "body {}\n",
-  );
-  assert.equal(
-    supportHandle.readFileText("precacher-ui-launcher.js"),
-    'console.log("launcher");\n',
-  );
+  const supportHandle = pluginsHandle.getDirectory("cheat-engine");
+  assert.equal(pluginsHandle.readFileText("CheatBridge.js"), 'console.log("bridge");\n');
+  assert.equal(supportHandle.readFileTextAtPath("init/import.js"), 'console.log("import");\n');
+  assert.equal(supportHandle.readFileTextAtPath("init/setup.js"), 'console.log("setup");\n');
+  assert.equal(supportHandle.readFileText("MainComponent.js"), 'console.log("main");\n');
+  assert.equal(supportHandle.readFileText("version.json"), JSON.stringify({ version: "2.4" }));
+  assert.equal(jsHandle.readFileText("plugins.js"), `[${manifest.pluginEntry}]\n`);
   assert.equal(result.filesCopied, manifest.supportFiles.length + 2);
 });
 
-test("loadInstalledConfigs reports the installed version file", async () => {
+test("loadInstalledPlugin reports the installed version file", async () => {
   const rootHandle = createFakeDirectory("Game");
   const jsHandle = rootHandle.addDirectory("js");
   const pluginsHandle = jsHandle.addDirectory("plugins");
-  const supportHandle = pluginsHandle.addDirectory("live-translator");
+  const supportHandle = pluginsHandle.addDirectory("cheat-engine");
 
   jsHandle.setFileText("plugins.js", "[]\n");
-  supportHandle.setFileText("settings.json", "{}\n");
-  supportHandle.setFileText("translator.json", "{}\n");
   supportHandle.setFileText("version.json", JSON.stringify({ version: "2.3" }));
 
   const manifest = {
-    bundleDirectory: "live-translator-installer",
-    loaderFile: "live-translator-loader.js",
-    supportDirectory: "live-translator",
-    supportFiles: ["settings.json", "translator.json"],
-    pluginEntry: '{"name":"live-translator-loader","status":true,"description":"Entry point","parameters":{}},',
+    bundleDirectory: "cheat-engine",
+    loaderFile: "CheatBridge.js",
+    supportDirectory: "cheat-engine",
+    supportFiles: ["init/import.js"],
+    pluginEntry: '{"name":"CheatBridge","status":true,"description":"Entry point","parameters":{}},',
   };
 
-  const originalFetch = globalThis.fetch;
-  globalThis.fetch = async (url) => createFetchResponse({
-    "/live-translator-installer/settings.json": "{}\n",
-    "/live-translator-installer/translator.json": "{}\n",
-  }, url);
+  const snapshot = await loadInstalledPlugin(rootHandle, manifest);
 
-  try {
-    const snapshot = await loadInstalledConfigs(rootHandle, manifest, {
-      baseUrl: "https://example.test/app.mjs",
-    });
-
-    assert.equal(snapshot.installedVersionChecked, true);
-    assert.equal(snapshot.installedVersion, "2.3");
-    assert.equal(snapshot.editable, true);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
+  assert.equal(snapshot.installed, true);
+  assert.equal(snapshot.installedVersionChecked, true);
+  assert.equal(snapshot.installedVersion, "2.3");
 });
 
 test("installer-manifest.json tracks the copied support bundle", async () => {
@@ -292,7 +155,7 @@ test("installer-manifest.json tracks the copied support bundle", async () => {
   const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 
   const bundleDirectory = path.join(repoRoot, manifest.bundleDirectory);
-  const excludedFiles = new Set(["install", "installer.ps1", "installer.sh", manifest.loaderFile]);
+  const excludedFiles = new Set([manifest.loaderFile]);
   const copiedFiles = (await listRelativeFiles(bundleDirectory))
     .filter((name) => !excludedFiles.has(name))
     .sort();
