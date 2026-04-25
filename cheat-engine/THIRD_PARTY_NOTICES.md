@@ -2,6 +2,10 @@
 
 This payload vendors the following third-party assets so the installed plugin can run without loading code, stylesheets, fonts, or instructions from the internet.
 
+This project was originally derived from:
+
+https://github.com/paramonos/RPG-Maker-MV-MZ-Cheat-UI-Plugin
+
 ## Vue.js
 
 - Version: 2.6.14
