@@ -1,28 +1,37 @@
-- [RPG-Maker-MV-MZ-Cheat-UI-Plugin](#rpg-maker-mv-mz-cheat-ui-plugin)
-- [Intro](#intro)
-  * [UI Sample](#ui-sample)
-  * [Features](#features)
-- [Set up](#set-up)
-  * [How to apply](#how-to-apply)
-  * [How to use](#how-to-use)
-  * [Apply same cheat settings from another game](#apply-same-cheat-settings-from-another-game)
-- [Handling Errors](#handling-errors)
-  * [If embeded nwjs version of game is lower than 0.26.4](#if-embeded-nwjs-version-of-game-is-lower-than-0264)
-  * [If the error occurs after updating the cheat](#if-the-error-occurs-after-updating-the-cheat)
+# RPG-Maker-MV-MZ-Cheat-UI-Plugin Web Installer
 
+Easily install [RPG-Maker-MV-MZ-Cheat-UI-Plugin](https://github.com/paramonos/RPG-Maker-MV-MZ-Cheat-UI-Plugin) right from the browser.
 
+This project packages the original RPG Maker MV/MZ Cheat UI as a browser-based installer. It scans a selected game folder, copies the bundled cheat payload into the game, and injects `CheatBridge` into `plugins.js`.
 
-# RPG-Maker-MV-MZ-Cheat-UI-Plugin
+## Original Project
 
-- GUI based RPG Maker MV/MZ game cheat tool
-- [한국어 도움말](https://github.com/paramonos/RPG-Maker-MV-MZ-Cheat-UI-Plugin/blob/main/README_ko-kr.md)
+- Original repository: https://github.com/paramonos/RPG-Maker-MV-MZ-Cheat-UI-Plugin
+- This fork keeps the cheat UI payload local so the installed plugin does not load code, stylesheets, fonts, or instructions from the internet.
+- Korean README: [README_ko-kr.md](README_ko-kr.md)
 
+## Install
 
+Use a Chromium browser such as Chrome or Edge. Directory access requires HTTPS or `localhost`.
 
-# Intro
+1. Open the deployed installer page.
+2. Choose the game folder that contains `Game.exe`.
+3. Confirm the detected `js/plugins` or `www/js/plugins` layout.
+4. Click `Install`.
+5. Launch the game and press `Ctrl + C` to open the cheat window.
 
+The installer writes `CheatBridge.js` into the game's plugin directory, copies the `cheat-engine` runtime beside it, and adds the plugin entry to `plugins.js`. It creates backups before changing `plugins.js` and any empty `package.json` name field it has to patch.
+
+For local development:
+
+```sh
+python3 dev-server.py
+```
+
+Then open `http://127.0.0.1:4173/`.
 
 ## UI Sample
+
 <p float="left">
   <img src="https://user-images.githubusercontent.com/99193603/153754676-cee2b96e-c03a-491f-b71c-3c57d6dcc474.JPG" width="500"/>
   <img src="https://user-images.githubusercontent.com/99193603/153754683-4e7a09a5-2d31-436d-8546-7a5d658eb282.JPG" width="500"/>
@@ -31,84 +40,41 @@
   <img src="https://user-images.githubusercontent.com/99193603/153754696-0cbc76f9-99fa-47a7-a0d0-6510a2f76e01.JPG" width="500"/>
 </p>
 
-
 ## Features
-- Good usability based on GUI.
-- Supports both RPG MV/MZ games.
-- Editing stats, gold, speed, items, variables, switches ...
-- Accelerate game speed (x0.1 ~ x10)
-- Supports no clip mode, god mode.
-- Disable random encounter.
-- Force battle victory/defeat/escape/abort.
-- Supports useful customizable shortcuts.
-    - Toggle save/load window, quick save/load, goto title, toggle no clip, editing party/enemy HP ...
-- Easy to find items, switched, variables, etc by searching text.
-- Save location and recall, teleport cheats.
-- Supports developers tool.
-- Translate variables, switches, maps. (Needs [ezTransWeb](https://github.com/HelloKS/ezTransWeb) : Only supports for Korean.)
-- **Maybe more features..?**
 
+- GUI based RPG Maker MV/MZ cheat tool.
+- Supports both RPG Maker MV and MZ games.
+- Edit stats, gold, speed, items, variables, switches, and more.
+- Accelerate game speed from x0.1 to x10.
+- Supports no clip mode and god mode.
+- Disable random encounters.
+- Force battle victory, defeat, escape, or abort.
+- Customizable shortcuts.
+- Search items, switches, variables, and related game data.
+- Save and recall locations, plus teleport cheats.
+- Developer tools support.
 
+## How To Use
 
-# Set up
+- Press `Ctrl + C` to toggle the cheat window.
+- You can change shortcuts in the `Shortcuts` tab.
+- The cheat window appears in the upper-right corner of the game window.
+- If the window is hard to see, move the mouse over it; it is partially transparent when idle.
 
+<img src="https://user-images.githubusercontent.com/99193603/153754676-cee2b96e-c03a-491f-b71c-3c57d6dcc474.JPG" width="400"/>
 
-## How to apply 
-1. Unpack game if needed.
-2. Download latest version of `rpg-{mv|mz}-cheat-{version}.zip` from **[releases](https://github.com/paramonos/RPG-Maker-MV-Cheat-UI-Plugin/releases)** and unzip.
-3. Copy unziped directories to `{game directory}/www` (for MZ, just copy to `{game_directory}`).
-    - It will overwrite `www/js/main.js` file, so it is strongly recommended to make a backup file.
-    - Example for RPG MV
-      <br/><img src="https://user-images.githubusercontent.com/99193603/153755213-b07f1abb-9c99-4157-857c-2f3a81e4a82a.JPG" width="500"/>
-      <br/><img src="https://user-images.githubusercontent.com/99193603/155840463-ae64385f-60c1-478c-b266-8e9580a878e6.png" width="500"/>
-    - Example for RPG MZ
-      <br/><img src="https://user-images.githubusercontent.com/99193603/155840462-028771ef-580c-4b45-969a-85f26329fef0.png" width="500"/>
+## Reusing Cheat Settings
 
+To reuse shortcut keys, move speed, game speed, and other cheat settings from another game, copy the `www/cheat-settings` folder from the already configured game into the target game.
 
+## Troubleshooting
 
+### Game Does Not Launch
 
-## How to use
-- Press `Ctrl + C` to toggle cheat window.
-    - You can change shortcuts in "Shortcuts" tab.
-    
-    - If you do not hover your mouse over the cheat window, you may not be able to see it well because it is a little bit transparent. Note that it appears in the upper-right corner of the game window.
-    
-    - <img src="https://user-images.githubusercontent.com/99193603/153754676-cee2b96e-c03a-491f-b71c-3c57d6dcc474.JPG" width="400"/>
-- Just enjoy cheat!
+Some older RPG Maker MV games ship with outdated NW.js runtimes. The installer includes an NW.js reminder and download link for users who need to update the runtime manually.
 
+If updating NW.js breaks the game itself, the cheat plugin cannot make that game compatible.
 
+### Errors After Updating
 
-## Apply same cheat settings from another game
-
-If you want to apply same shortcut keys, move speed, game speed, translation, etc... settings from another game,
-
-Just copy the `www/cheat-settings` folder of the game that already has settings applied to the other game folder.
-
-
-
-# Handling Errors 
-
-## If embeded nwjs version of game is lower than 0.26.4
-
-- Cheats may not work properly in older versions of the game since the script is based on es6.
-- In that case, you need to force update to the new nwjs version.
-
-1. Download latest version of [nwjs](https://dl.nwjs.io/v0.61.0/) and unzip. (`{version}/nwjs-symbol-v{version}-win-{ia32|x64}.7z`)
-   - If you need developer tools, download the sdk version.
-2. Copy `www` directory and `package.json` file from the game directory to nwjs directory.
-   - <img src="https://user-images.githubusercontent.com/99193603/153755660-25da5b48-b542-443e-bd38-2e3e95e13a63.JPG" width="500"/>
-3. Run `nw.exe` and play game.
-
-
-
-> If the game does not work properly after the nwjs update, cheats cannot be applied to the game.
->
-> - In this case, please use [another cheat](https://github.com/emerladCoder/RPG-Maker-MV-Cheat-Menu-Plugin).
-
-
-
-## If the error occurs after updating the cheat
-
-Settings files created from earlier versions of cheats may cause errors.
-
-Delete the `www/cheat-settings` folder from the game folder.
+Settings files created by older cheat builds may cause errors. Delete the game's `www/cheat-settings` folder and relaunch the game.
