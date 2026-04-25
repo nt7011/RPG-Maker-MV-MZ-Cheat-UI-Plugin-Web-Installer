@@ -38,6 +38,8 @@ function applyCheat () {
 
     // import in head
     document.head.innerHTML += `
+<link href="${__resolveCheatPath('css/materialdesignicons.min.css')}" rel="stylesheet">
+<link href="${__resolveCheatPath('css/vuetify.min.css')}" rel="stylesheet">
 <link href="${__resolveCheatPath('css/main.css')}" rel="stylesheet">
 `
 
