@@ -4,13 +4,13 @@
 
 :root {
   color-scheme: light;
-  --page-bg: #eef3f1;
+  --page-bg: #f4f1f8;
   --panel-bg: #fcfcf8;
   --border: #c8d3cf;
   --text: #1d2523;
   --muted: #56615d;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
+  --accent: #7c3aed;
+  --accent-strong: #5b21b6;
   --warn: #b45309;
   --error: #b91c1c;
   --success: #15803d;
