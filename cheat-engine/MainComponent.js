@@ -5,7 +5,6 @@ import AlertSnackbar from './components/AlertSnackbar.js'
 import ConfirmDialog from './components/ConfirmDialog.js'
 import { customizeRPGMakerFunctions } from './init/customize_functions.js'
 import {Key} from './js/KeyCodes.js'
-import {Alert} from'./js/AlertHelper.js'
 
 export default {
     name: 'MainComponent',
@@ -56,8 +55,6 @@ export default {
 
         window.addEventListener('keydown', this.onGlobalKeyDown)
         window.addEventListener('keyup', this.onGlobalKeyUp)
-
-        this.checkVersion()
     },
 
     beforeDestroy () {
@@ -117,40 +114,6 @@ export default {
 
             // open
             this.show = true
-        },
-
-        async checkVersion () {
-            if (!Utils.isNwjs()) {
-                return
-            }
-
-            try {
-                const releaseInfo = (await axios.get('https://api.github.com/repos/paramonos/RPG-Maker-MV-MZ-Cheat-UI-Plugin/releases/latest')).data
-
-                const currentCheatVersion = this.getCurrentCheatVersion()
-
-                if (!currentCheatVersion) {
-                    return
-                }
-
-                if (currentCheatVersion < releaseInfo.tag_name) {
-                    Alert.warn(`New cheat version has been released : ${currentCheatVersion} → ${releaseInfo.tag_name}`, null, 3000)
-                }
-            } catch (err) {
-
-            }
-        },
-
-        getCurrentCheatVersion () {
-            try {
-                const targetDir = Utils.RPGMAKER_NAME === 'MV' ? 'www' : '.'
-
-                const description = JSON.parse(require('fs').readFileSync(targetDir + '/cheat-version-description.json', 'utf-8'))
-
-                return description.version
-            } catch (err) {
-                return null
-            }
         }
     }
 }

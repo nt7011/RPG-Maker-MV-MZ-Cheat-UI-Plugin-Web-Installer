@@ -1,6 +1,4 @@
 import {ConfirmDialog} from '../js/DialogHelper.js'
-import {TRANSLATOR} from '../js/TranslateHelper.js'
-import {TRANSLATE_SETTINGS} from '../js/TranslateHelper.js'
 
 export default {
     name: 'SwitchSettingPanel',
@@ -133,8 +131,8 @@ export default {
     },
 
     methods: {
-        async initializeVariables () {
-            this.switchNames = await this.getSwitchNames()
+        initializeVariables () {
+            this.switchNames = this.getSwitchNames()
 
             this.tableItems = this.switchNames.map((switchName, idx) => {
                 return {
@@ -145,14 +143,8 @@ export default {
             })
         },
 
-        async getSwitchNames () {
-            const rawSwitchNames = $dataSystem.switches.slice()
-
-            if (TRANSLATE_SETTINGS.isSwitchTranslateEnabled()) {
-                return await TRANSLATOR.translateBulk(rawSwitchNames)
-            }
-
-            return rawSwitchNames
+        getSwitchNames () {
+            return $dataSystem.switches.slice()
         },
 
         onItemChange (item) {

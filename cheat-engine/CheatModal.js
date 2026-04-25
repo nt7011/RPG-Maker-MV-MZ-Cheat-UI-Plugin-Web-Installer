@@ -9,7 +9,6 @@ import SwitchSettingPanel from './panels/SwitchSettingPanel.js'
 import SaveRecallPanel from './panels/SaveRecallPanel.js'
 import TeleportPanel from './panels/TeleportPanel.js'
 import ShortcutPanel from './panels/ShortcutPanel.js'
-import TranslateSettingsPanel from './panels/TranslateSettingsPanel.js'
 
 export default {
     name: 'CheatModal',
@@ -25,8 +24,7 @@ export default {
         SwitchSettingPanel,
         SaveRecallPanel,
         TeleportPanel,
-        ShortcutPanel,
-        TranslateSettingsPanel
+        ShortcutPanel
     },
 
     template: `
@@ -150,17 +148,6 @@ export default {
                   name: 'Teleport',
                   icon: 'mdi-run-fast',
                   component: 'teleport-panel'
-              },
-              {
-                  name: 'Settings',
-                  icon: 'mdi-cog',
-                  children: [
-                      {
-                          name: 'Translate',
-                          icon: 'mdi-google-translate',
-                          component: 'translate-settings-panel'
-                      }
-                  ]
               }
           ]
       }

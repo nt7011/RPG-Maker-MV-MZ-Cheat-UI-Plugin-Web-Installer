@@ -20,8 +20,6 @@
     "js/KeyValueStorage.js",
     "js/ShortcutHelper.js",
     "js/Tools.js",
-    "js/TranslateHelper.js",
-    "libs/axios.min.js",
     "libs/vue.js",
     "libs/vuetify.js",
     "panels/ArmorSettingPanel.js",
@@ -35,7 +33,6 @@
     "panels/StatsSettingPanel.js",
     "panels/SwitchSettingPanel.js",
     "panels/TeleportPanel.js",
-    "panels/TranslateSettingsPanel.js",
     "panels/VariableSettingPanel.js",
     "panels/WeaponSettingPanel.js",
     "settings/CheatKeyMap.js"

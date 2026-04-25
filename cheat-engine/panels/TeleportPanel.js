@@ -1,6 +1,3 @@
-import {TRANSLATE_SETTINGS, TRANSLATOR} from '../js/TranslateHelper.js'
-import {Alert} from '../js/AlertHelper.js'
-
 export default {
     name: 'TeleportPanel',
 
@@ -135,9 +132,9 @@ export default {
     },
 
     methods: {
-        async initializeVariables () {
+        initializeVariables () {
             const rawDataMapInfos = $dataMapInfos.filter(mapInfo => !!mapInfo)
-            const mapNames = await this.getMapNames($dataMapInfos)
+            const mapNames = this.getMapNames($dataMapInfos)
 
             this.maps = $dataMapInfos.filter(mapInfo => !!mapInfo).map(mapInfo => {
                 let fullPath = []
@@ -155,14 +152,8 @@ export default {
             })
         },
 
-        async getMapNames (dataMapInfos) {
-            const rawNames = dataMapInfos.map(m => m ? m.name : '')
-
-            if (TRANSLATE_SETTINGS.isMapTranslateEnabled()) {
-                return await TRANSLATOR.translateBulk(rawNames)
-            }
-
-            return rawNames
+        getMapNames (dataMapInfos) {
+            return dataMapInfos.map(m => m ? m.name : '')
         },
 
         getMapAncestors (id, path) {
