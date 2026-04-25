@@ -37,10 +37,18 @@ Click "OK" button to see the solution.
 }
 
 function applyCheat () {
+    const cheatEngineBaseUrl = window.CheatEngine && window.CheatEngine.baseUrl
+        ? window.CheatEngine.baseUrl
+        : '../cheat-engine/'
+
+    function __resolveCheatPath(src) {
+        return new URL(src, cheatEngineBaseUrl).href
+    }
+
     function __addScript(type, src) {
         var cheatScript = document.createElement('script');
         cheatScript.type = type;
-        cheatScript.src = src
+        cheatScript.src = __resolveCheatPath(src)
 
         document.body.appendChild(cheatScript)
     }
@@ -48,14 +56,14 @@ function applyCheat () {
     function __loadJavaScript(src) {
         var script = document.createElement('script');
         script.type = 'text/javascript';
-        script.src = src;
+        script.src = __resolveCheatPath(src);
         script.async = false;
         script._url = src;
         document.body.appendChild(script);
     }
 
     // load libs
-    __loadJavaScript('cheat/libs/axios.min.js')
+    __loadJavaScript('libs/axios.min.js')
 
     // add <div id='app'> node for vue
     const appDiv = document.createElement('div')
@@ -80,12 +88,12 @@ function applyCheat () {
 <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
-<link href="cheat/css/main.css" rel="stylesheet">
+<link href="${__resolveCheatPath('css/main.css')}" rel="stylesheet">
 `
 
     // import in body
-    // __loadJavaScript('cheat/init/setup.js')
-    __addScript('module', 'cheat/init/setup.js')
+    // __loadJavaScript('init/setup.js')
+    __addScript('module', 'init/setup.js')
 }
 
 validateNwjsVersion()
