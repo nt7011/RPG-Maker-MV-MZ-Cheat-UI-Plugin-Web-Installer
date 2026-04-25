@@ -232,11 +232,21 @@ button:disabled {
   color: var(--muted);
 }
 
+.translator-panel p {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
 .download-link {
   margin-bottom: 12px;
 }
 
-.download-link a {
+.translator-link {
+  margin-top: 12px;
+}
+
+.download-link a,
+.translator-link a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -250,7 +260,19 @@ button:disabled {
   text-decoration: none;
 }
 
+.translator-link a {
+  border-color: #115e59;
+  background: #0f766e;
+}
+
 .download-link a:hover,
-.download-link a:focus-visible {
+.download-link a:focus-visible,
+.translator-link a:hover,
+.translator-link a:focus-visible {
   background: var(--accent-strong);
+}
+
+.translator-link a:hover,
+.translator-link a:focus-visible {
+  background: #115e59;
 }
