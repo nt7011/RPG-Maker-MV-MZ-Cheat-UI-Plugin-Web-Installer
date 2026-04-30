@@ -1,3 +1,5 @@
+import {TRANSLATE_SETTINGS, TRANSLATOR} from '../js/TranslateHelper.js'
+
 export default {
     name: 'VariableSettingPanel',
 
@@ -117,8 +119,8 @@ export default {
     },
 
     methods: {
-        initializeVariables () {
-            this.variableNames = this.getVariableNames()
+        async initializeVariables () {
+            this.variableNames = await this.getVariableNames()
 
             this.tableItems = this.variableNames.map((varName, idx) => {
                 return {
@@ -129,8 +131,14 @@ export default {
             })
         },
 
-        getVariableNames () {
-            return $dataSystem.variables.slice()
+        async getVariableNames () {
+            const rawVariableNames = $dataSystem.variables.slice()
+
+            if (TRANSLATE_SETTINGS.isVariableTranslateEnabled()) {
+                return await TRANSLATOR.translateBulk(rawVariableNames)
+            }
+
+            return rawVariableNames
         },
 
         onItemChange (item) {
